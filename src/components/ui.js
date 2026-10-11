@@ -7,16 +7,24 @@ export const PALETTE = ['#000000', '#FFFFFF', '#1F2937', '#6B7280', '#DC2626', '
 
 export function Btn({ icon, label, onPress, active, disabled, color }) {
   return (
-    <TouchableOpacity accessibilityLabel={label} disabled={disabled} onPress={onPress} style={[s.btn, active && { backgroundColor: C.primary + '22', borderColor: C.primary }, disabled && { opacity: 0.35 }]}>
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel={label} disabled={disabled} onPress={onPress} style={[s.btn, active && { backgroundColor: C.primary + '22', borderColor: C.primary }, disabled && { opacity: 0.35 }]}>
       <Ionicons name={icon} size={20} color={color || (active ? C.primary : C.text)} />
       <Text style={[s.btnTxt, color && { color }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
-export function Primary({ title, onPress, icon, style, disabled, loading }) {
+export function Primary({ title, onPress, icon, style, disabled, loading, color }) {
   return (
-    <TouchableOpacity disabled={disabled || loading} onPress={onPress} style={[s.primary, (disabled || loading) && { opacity: 0.6 }, style]}>
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel={title} disabled={disabled || loading} onPress={onPress} style={[s.primary, (disabled || loading) && { opacity: 0.6 }, color && { backgroundColor: color }, style]}>
       {loading ? <ActivityIndicator color="#fff" /> : <>{icon && <Ionicons name={icon} size={18} color="#fff" style={{ marginRight: 6 }} />}<Text style={s.primaryTxt}>{title}</Text></>}
+    </TouchableOpacity>
+  );
+}
+export function HeaderBack({ onPress }) {
+  return (
+    <TouchableOpacity accessibilityRole="button" accessibilityLabel="Back" onPress={onPress} style={{ minWidth: 52, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+      <Ionicons name="arrow-back" size={20} color={C.text} />
+      <Text style={{ color: C.text, fontSize: 9 }}>Back</Text>
     </TouchableOpacity>
   );
 }
@@ -24,7 +32,10 @@ export function Swatches({ value, onPick, colors = PALETTE }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 4 }}>
       {colors.map((c) => (
-        <TouchableOpacity key={c} accessibilityLabel={'Color ' + c} onPress={() => onPick(c)} style={[s.sw, { backgroundColor: c }, (value || '').toLowerCase() === c.toLowerCase() && { borderColor: C.primary, borderWidth: 3 }]} />
+        <TouchableOpacity key={c} accessibilityRole="button" accessibilityLabel={'Select color ' + c} onPress={() => onPick(c)} style={s.swTouch}>
+          <View style={[s.sw, { backgroundColor: c }, (value || '').toLowerCase() === c.toLowerCase() && { borderColor: C.primary, borderWidth: 3 }]} />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}><Ionicons name="color-palette-outline" size={9} color={C.muted} /><Text style={s.swText}>{c.slice(1, 4)}</Text></View>
+        </TouchableOpacity>
       ))}
     </ScrollView>
   );
@@ -34,9 +45,9 @@ export function Stepper({ label, value, onChange, step = 1, min = 0, max = 999, 
   return (
     <View style={s.stepper}>
       <Text style={s.stLabel}>{label}</Text>
-      <TouchableOpacity style={s.stBtn} onPress={() => set(value - step)}><Ionicons name="remove" size={18} color={C.text} /></TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Decrease ${label}`} style={s.stBtn} onPress={() => set(value - step)}><Ionicons name="remove" size={16} color={C.text} /><Text style={s.stBtnLabel}>Less</Text></TouchableOpacity>
       <Text style={s.stVal}>{fmt ? fmt(value) : Math.round(value)}</Text>
-      <TouchableOpacity style={s.stBtn} onPress={() => set(value + step)}><Ionicons name="add" size={18} color={C.text} /></TouchableOpacity>
+      <TouchableOpacity accessibilityRole="button" accessibilityLabel={`Increase ${label}`} style={s.stBtn} onPress={() => set(value + step)}><Ionicons name="add" size={16} color={C.text} /><Text style={s.stBtnLabel}>More</Text></TouchableOpacity>
     </View>
   );
 }
@@ -44,8 +55,9 @@ export function Seg({ options, value, onChange }) {
   return (
     <View style={s.seg}>
       {options.map((o) => (
-        <TouchableOpacity key={o.k} onPress={() => onChange(o.k)} style={[s.segItem, value === o.k && { backgroundColor: C.primary }]}>
-          {o.icon ? <Ionicons name={o.icon} size={16} color={value === o.k ? '#fff' : C.text} /> : <Text style={{ color: value === o.k ? '#fff' : C.text, fontSize: 12 }}>{o.label}</Text>}
+        <TouchableOpacity key={o.k} accessibilityRole="button" accessibilityLabel={o.label || o.k} accessibilityState={{ selected: value === o.k }} onPress={() => onChange(o.k)} style={[s.segItem, value === o.k && { backgroundColor: C.primary }]}>
+          <Ionicons name={o.icon || (value === o.k ? 'checkmark-circle' : 'ellipse-outline')} size={16} color={value === o.k ? '#fff' : C.text} />
+          <Text style={{ color: value === o.k ? '#fff' : C.text, fontSize: 12 }}>{o.label || o.k}</Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -67,11 +79,14 @@ const s = StyleSheet.create({
   btnTxt: { fontSize: 10, color: C.text, marginTop: 2 },
   primary: { flexDirection: 'row', backgroundColor: C.primary, minHeight: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   primaryTxt: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  sw: { width: 32, height: 32, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#cfd3de' },
+  swTouch: { minWidth: 46, minHeight: 46, alignItems: 'center', justifyContent: 'center', marginRight: 3 },
+  sw: { width: 26, height: 26, borderRadius: 13, borderWidth: 1, borderColor: '#cfd3de' },
+  swText: { fontSize: 8, color: C.muted, marginTop: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', marginRight: 14, marginVertical: 4 },
   stLabel: { fontSize: 12, color: C.muted, marginRight: 6, width: 44 },
-  stBtn: { width: 34, height: 34, borderRadius: 8, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  stBtn: { minWidth: 44, minHeight: 44, borderRadius: 8, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  stBtnLabel: { fontSize: 8, color: C.muted },
   stVal: { width: 38, textAlign: 'center', fontWeight: '600', color: C.text },
   seg: { flexDirection: 'row', borderWidth: 1, borderColor: C.border, borderRadius: 10, overflow: 'hidden', marginRight: 10 },
-  segItem: { minWidth: 40, minHeight: 36, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  segItem: { minWidth: 44, minHeight: 44, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
 });

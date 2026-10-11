@@ -7,7 +7,7 @@ export function ElementBody({ el }) {
   const shadow = el.shadow ? { shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 6 } : null;
   if (el.type === 'text') {
     return (
-      <Text style={{ width: '100%', height: '100%', color: el.color, fontSize: el.fontSize, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textAlign: el.align, fontFamily: resolveFont(el.fontFamily),
+    <Text style={{ width: '100%', height: '100%', color: el.color, backgroundColor: el.bg || 'transparent', borderRadius: el.radius || 0, borderWidth: el.borderWidth || 0, borderColor: el.borderColor, fontSize: el.fontSize, fontWeight: el.fontWeight, fontStyle: el.fontStyle, textAlign: el.align, fontFamily: resolveFont(el.fontFamily),
         textShadowColor: el.shadow ? 'rgba(0,0,0,0.35)' : 'transparent', textShadowRadius: el.shadow ? 4 : 0, textShadowOffset: { width: 0, height: 2 } }}>{el.text}</Text>
     );
   }

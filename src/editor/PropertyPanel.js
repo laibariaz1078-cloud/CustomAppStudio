@@ -5,13 +5,13 @@ import { FONT_NAMES } from '../utils/fonts';
 
 const Row = ({ children }) => <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ alignItems: 'center', paddingVertical: 2 }}>{children}</ScrollView>;
 
-export default function PropertyPanel({ el, design, ed, onPickImage, onPickBg }) {
+export default function PropertyPanel({ el, design, ed, onPickImage, onPickBg, onDelete, onRemoveBg, onClearImage }) {
   const p = (patch) => ed.patchEl(el.id, patch);
   if (!el) {
     return (
       <View>
         <Label>Background color</Label><Swatches value={design.background.color} onPick={(c) => ed.patchBackground({ color: c })} />
-        <Row><Btn icon="image" label="Bg image" onPress={onPickBg} />{design.background.uri ? <Btn icon="close-circle" label="Remove bg" onPress={() => ed.patchBackground({ uri: null })} /> : null}</Row>
+        <Row><Btn icon="image" label="Bg image" onPress={onPickBg} />{design.background.uri ? <Btn icon="close-circle" label="Remove bg" color={C.danger} onPress={onRemoveBg} /> : null}</Row>
         <Label>Primary color (recolors template)</Label><Swatches value={design.palette.primary} onPick={(c) => ed.setThemeColor('primary', c)} />
         <Label>Secondary color</Label><Swatches value={design.palette.secondary} onPick={(c) => ed.setThemeColor('secondary', c)} />
         <Text style={{ color: C.muted, fontSize: 12, marginTop: 8 }}>Tap an element on the canvas to edit it. Drag to move, use the blue handle to resize.</Text>
@@ -22,9 +22,9 @@ export default function PropertyPanel({ el, design, ed, onPickImage, onPickBg })
     <View>
       <Row>
         <Btn icon="copy-outline" label="Duplicate" onPress={() => ed.duplicate(el.id)} />
-        <Btn icon="trash-outline" label="Delete" color={C.danger} onPress={() => ed.removeElement(el.id)} />
+        <Btn icon="trash-outline" label="Delete" color={C.danger} onPress={() => onDelete(el)} />
         <Btn icon={el.locked ? 'lock-closed' : 'lock-open-outline'} label={el.locked ? 'Unlock' : 'Lock'} active={el.locked} onPress={() => p({ locked: !el.locked })} />
-        <Btn icon="eye-off-outline" label="Hide" onPress={() => p({ visible: false })} />
+        <Btn icon={el.visible ? 'eye-off-outline' : 'eye-outline'} label={el.visible ? 'Hide' : 'Show'} onPress={() => p({ visible: !el.visible })} />
         <Btn icon="arrow-up" label="Forward" onPress={() => ed.reorder(el.id, 'up')} />
         <Btn icon="arrow-down" label="Backward" onPress={() => ed.reorder(el.id, 'down')} />
         <Btn icon="caret-up-circle-outline" label="To front" onPress={() => ed.reorder(el.id, 'front')} />
@@ -42,12 +42,10 @@ export default function PropertyPanel({ el, design, ed, onPickImage, onPickBg })
         <Label>Font</Label><Row><Seg value={el.fontFamily} onChange={(k) => p({ fontFamily: k })} options={FONT_NAMES.map((n) => ({ k: n, label: n }))} /></Row>
         <Label>Text color</Label><Swatches value={el.color} onPick={(c) => p({ color: c })} />
       </>)}
-      {el.type === 'shape' && (<><Label>Fill color</Label><Swatches value={el.bg} onPick={(c) => p({ bg: c })} /></>)}
-      {el.type === 'image' && (<Row><Btn icon="images" label={el.uri ? 'Replace' : 'Choose image'} onPress={onPickImage} />{el.uri ? <Btn icon="close" label="Clear" onPress={() => p({ uri: null })} /> : null}</Row>)}
-      {el.type !== 'text' && (<>
-        <Label>Border</Label><Row><Stepper label="Width" value={el.borderWidth} max={20} onChange={(v) => p({ borderWidth: v })} /><Stepper label="Radius" value={el.radius} step={4} max={500} onChange={(v) => p({ radius: v })} /></Row>
-        <Swatches value={el.borderColor} onPick={(c) => p({ borderColor: c })} />
-      </>)}
+      {(el.type === 'shape' || el.type === 'text') && (<><Label>{el.type === 'text' ? 'Fill color' : 'Shape color'}</Label><Swatches value={el.bg} onPick={(c) => p({ bg: c })} /></>)}
+      {el.type === 'image' && (<Row><Btn icon="images" label={el.uri ? 'Replace' : 'Choose image'} onPress={onPickImage} />{el.uri ? <Btn icon="close" label="Clear" color={C.danger} onPress={onClearImage} /> : null}</Row>)}
+      <Label>Border</Label><Row><Stepper label="Width" value={el.borderWidth || 0} max={20} onChange={(v) => p({ borderWidth: v })} /><Stepper label="Radius" value={el.radius || 0} step={4} max={500} onChange={(v) => p({ radius: v })} /></Row>
+      <Swatches value={el.borderColor || '#000000'} onPick={(c) => p({ borderColor: c })} />
       <Label>Layout</Label>
       <Row>
         <Stepper label="X" value={el.x} step={5} min={-1000} max={2000} onChange={(v) => p({ x: v })} /><Stepper label="Y" value={el.y} step={5} min={-1000} max={2000} onChange={(v) => p({ y: v })} />

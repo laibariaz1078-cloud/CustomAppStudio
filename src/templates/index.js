@@ -23,11 +23,14 @@ const R = {
   skills: 'JavaScript • React • Node.js\nMongoDB • Git • REST APIs', proj: 'Project Name — what you built, the tech used and the result.\nProject Name — short description.',
   cert: 'Certification Name — Issuer (2025)', lang: 'English • Urdu', ach: 'Add an award or achievement here.',
 };
-const sec = (x, y, w, title, body, bh, hc, bc, f = 'System') => [
-  txt(title.toUpperCase(), x, y, w, 18, { fontSize: 12, fontWeight: '700', color: hc, fontFamily: f }),
-  shp(x, y + 19, w, 1.5, hc, { opacity: 0.5 }),
-  txt(body, x, y + 26, w, bh, { fontSize: 11, color: bc, fontFamily: f }),
-];
+const sec = (x, y, w, title, body, bh, hc, bc, f = 'System') => {
+  const sectionId = uid();
+  return [
+    { ...txt(title.toUpperCase(), x, y, w, 18, { fontSize: 12, fontWeight: '700', color: hc, fontFamily: f }), sectionId, sectionRole: 'heading' },
+    { ...shp(x, y + 19, w, 1.5, hc, { opacity: 0.5 }), sectionId, sectionRole: 'divider' },
+    { ...txt(body, x, y + 26, w, bh, { fontSize: 11, color: bc, fontFamily: f }), sectionId, sectionRole: 'body' },
+  ];
+};
 const resumeLayouts = [
   { name: 'Sidebar', bg: () => '#ffffff', build: (P) => [
     shp(0, 0, 200, H, P.pri), img(50, 40, 100, 100, { radius: 50, borderWidth: 3, borderColor: '#ffffff' }),
@@ -179,21 +182,79 @@ const inviteLayouts = [
   ] },
 ];
 
+const resumeNames = ['Professional', 'Modern', 'Minimal', 'Corporate', 'Creative', 'Academic', 'Executive', 'Technical', 'Fresher', 'Two-column', 'Single-column', 'Colorful', 'Monochrome', 'Editorial', 'Classic', 'Contemporary', 'Portfolio', 'Clean', 'Bold', 'ATS-friendly'];
+const cardNames = ['Minimalist', 'Corporate', 'Luxury', 'Creative', 'Elegant', 'Colorful', 'Tech', 'Photography', 'Modern', 'Classic', 'Studio', 'Executive', 'Artisan', 'Monogram', 'Founder', 'Consultant', 'Architect', 'Designer', 'Editorial', 'Signature'];
+function variantElements(elements, variant, kind, width, height, primary, secondary) {
+  if (variant === 0) return elements;
+  if (kind === 'card' && variant === 1) {
+    const landscape = width > height;
+    const nextWidth = landscape ? height : width;
+    const nextHeight = landscape ? width : height;
+    const sx = nextWidth / height;
+    const sy = nextHeight / width;
+    const mapped = elements.map((e) => ({ ...e, x: Math.round(e.y * sx), y: Math.round(e.x * sy), w: Math.round(e.h * sx), h: Math.round(e.w * sy) }));
+    return [{ id: uid(), type: 'shape', x: 0, y: 0, w: nextWidth, h: 8, bg: primary, ...base }, ...mapped];
+  }
+  if (variant === 1) {
+    const mirrored = elements.map((e) => ({
+      ...e,
+      x: Math.round(width - e.x - e.w),
+      align: e.type === 'text' ? (e.align === 'left' ? 'right' : e.align === 'right' ? 'left' : e.align) : e.align,
+    }));
+    return kind === 'invite' ? [{ id: uid(), type: 'shape', x: 0, y: 0, w: width, h: 10, bg: primary, ...base }, ...mirrored] : mirrored;
+  }
+  if (variant === 2) {
+    const scale = kind === 'resume' ? 0.9 : 0.84;
+    const insetX = Math.round((width * (1 - scale)) / 2);
+    const insetY = Math.round((height * (1 - scale)) / 2);
+    const scaled = elements.map((e) => ({ ...e, x: Math.round(insetX + e.x * scale), y: Math.round(insetY + e.y * scale), w: Math.max(1, Math.round(e.w * scale)), h: Math.max(1, Math.round(e.h * scale)), ...(e.type === 'text' ? { fontSize: Math.max(6, Math.round(e.fontSize * scale)) } : {}) }));
+    const frame = kind === 'resume'
+      ? [{ id: uid(), type: 'shape', x: 0, y: 0, w: 8, h: height, bg: primary, ...base }, { id: uid(), type: 'shape', x: 24, y: 24, w: width - 48, h: 2, bg: secondary, ...base }]
+      : [{ id: uid(), type: 'shape', x: 6, y: 6, w: width - 12, h: height - 12, bg: 'transparent', borderWidth: 2, borderColor: primary, radius: 0, ...base }];
+    return [...frame, ...scaled];
+  }
+  if (kind === 'resume') {
+    const result = elements.map((e) => e.type === 'text' && e.y < 180 && e.w > 120
+      ? { ...e, x: 36, w: width - 72, align: 'center' }
+      : e);
+    return [{ id: uid(), type: 'shape', x: 0, y: 0, w: width, h: 8, bg: primary, ...base }, ...result];
+  }
+  return elements.map((e) => e.type === 'text'
+    ? { ...e, x: 14, w: width - 28, align: 'center' }
+    : e);
+}
+
 /* ============================ REGISTRY ============================ */
 export const TEMPLATES = [];
-resumeLayouts.forEach((L, i) => resumePalettes.forEach((P, j) => TEMPLATES.push({
-  id: `resume-${i + 1}-${j + 1}`, appType: 'resume', name: `${L.name} ${P.n}`, width: W, height: H, background: L.bg(P), palette: { primary: P.pri, secondary: P.sec }, build: () => L.build(P),
-})));
-cardLayouts.forEach((L, i) => cardPalettes.forEach((P, j) => TEMPLATES.push({
-  id: `card-${i + 1}-${j + 1}`, appType: 'card', name: `${L.name} ${P.n}`, width: L.w, height: L.h, background: L.bg(P), palette: { primary: P.pri, secondary: P.sec }, build: () => L.build(P),
-})));
+resumeLayouts.forEach((L, i) => resumePalettes.forEach((P, j) => {
+  const variant = j;
+  TEMPLATES.push({
+    id: `resume-${i + 1}-${j + 1}`, appType: 'resume', category: resumeNames[i * 4 + j], name: `${resumeNames[i * 4 + j]} ${L.name}`, width: W, height: H,
+    background: L.bg(P), palette: { primary: P.pri, secondary: P.sec },
+    build: () => variantElements(L.build(P), variant, 'resume', W, H, P.pri, P.sec),
+  });
+}));
+cardLayouts.forEach((L, i) => cardPalettes.forEach((P, j) => {
+  const variant = j;
+  TEMPLATES.push({
+    id: `card-${i + 1}-${j + 1}`, appType: 'card', category: cardNames[i * 4 + j], name: `${cardNames[i * 4 + j]} ${L.name}`, width: variant === 1 ? L.h : L.w, height: variant === 1 ? L.w : L.h,
+    background: L.bg(P), palette: { primary: P.pri, secondary: P.sec },
+    build: () => variantElements(L.build(P), variant, 'card', L.w, L.h, P.pri, P.sec),
+  });
+}));
 occasions.forEach((O, i) => {
   const L = inviteLayouts[i % 5]; const tc = O.dark ? '#ffffff' : '#222222'; const mc = O.dark ? '#cbd5e1' : '#555555';
-  TEMPLATES.push({ id: `invite-${i + 1}`, appType: 'invite', name: `${O.n} · ${L.name}`, width: L.w, height: L.h, background: L.solid ? O.a : O.bg, palette: { primary: O.a, secondary: O.bg }, build: () => L.build(O, tc, mc) });
+  const variant = Math.floor(i / inviteLayouts.length);
+  TEMPLATES.push({
+    id: `invite-${i + 1}`, appType: 'invite', category: O.n, name: `${O.n} · ${L.name}`, width: L.w, height: L.h,
+    background: L.solid ? O.a : O.bg, palette: { primary: O.a, secondary: O.bg },
+    build: () => variantElements(L.build(O, tc, mc), variant, 'invite', L.w, L.h, O.a, O.bg),
+  });
 });
 
 export const templatesFor = (appType) => TEMPLATES.filter((t) => t.appType === appType);
 export function createFromTemplate(id) {
   const t = TEMPLATES.find((x) => x.id === id);
+  if (!t) throw new Error('This template could not be found.');
   return { id: 'd' + uid(), name: t.name, appType: t.appType, templateId: t.id, width: t.width, height: t.height, background: { color: t.background, uri: null }, palette: { ...t.palette }, elements: t.build(), createdAt: Date.now(), updatedAt: Date.now() };
 }
