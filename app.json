@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "CustomApp Studio",
+    "slug": "customapp-studio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Used to add photos, logos and backgrounds to your designs."
+      }
+    },
+    "android": {
+      "package": "com.customapp.studio",
+      "permissions": []
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CustomApp Studio to access your photos to add them to designs."
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}
